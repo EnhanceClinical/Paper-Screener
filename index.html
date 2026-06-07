@@ -595,9 +595,9 @@
       renderQueue();
       updateProgress(i + 1, pending.length);
 
-      // 5 second delay between each paper to avoid rate limits
+      // 15 second delay between each paper to avoid rate limits
       if (i < pending.length - 1) {
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, 15000));
       }
     }
 
@@ -643,7 +643,7 @@ The JSON must have exactly these keys:
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{
