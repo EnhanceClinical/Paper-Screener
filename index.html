@@ -567,22 +567,38 @@
       renderQueue();
       updateProgress(i, pending.length);
 
-      try {
-        const b64 = await fileToBase64(paper.file);
-        const extracted = await extractPaper(b64, topic);
-        paper.status = 'done';
-        paper.data = extracted;
-        results.push({ ...extracted, fileName: paper.name });
-        renderTable();
-        document.getElementById('statDone').textContent = results.length;
-        document.getElementById('exportBtn').disabled = false;
-      } catch(err) {
-        paper.status = 'error';
-        showToast(`Error processing ${paper.name}: ${err.message}`, true);
+      let attempts = 0;
+      let success = false;
+      while (attempts < 3 && !success) {
+        try {
+          const b64 = await fileToBase64(paper.file);
+          const extracted = await extractPaper(b64, topic);
+          paper.status = 'done';
+          paper.data = extracted;
+          results.push({ ...extracted, fileName: paper.name });
+          renderTable();
+          document.getElementById('statDone').textContent = results.length;
+          document.getElementById('exportBtn').disabled = false;
+          success = true;
+        } catch(err) {
+          attempts++;
+          if (attempts < 3) {
+            showToast(`Rate limit hit — waiting 15s before retry (attempt ${attempts}/3)...`);
+            await new Promise(r => setTimeout(r, 15000));
+          } else {
+            paper.status = 'error';
+            showToast(`Error processing ${paper.name}: ${err.message}`, true);
+          }
+        }
       }
 
       renderQueue();
       updateProgress(i + 1, pending.length);
+
+      // 5 second delay between each paper to avoid rate limits
+      if (i < pending.length - 1) {
+        await new Promise(r => setTimeout(r, 5000));
+      }
     }
 
     isRunning = false;
